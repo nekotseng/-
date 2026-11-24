@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表情符號記憶挑戰 🧠✨</title>
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 載入 Google Fonts 繁體中文字型 Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e5e9f7 50%, #f5f0ff 100%);
+      min-height: 100vh;
+      user-select: none; /* 防止快速點擊時選取到文字 */
+    }
+
+    /* 遊戲卡片基礎樣式與動畫 */
+    .emoji-card {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 作答階段可點擊的卡片 Hover 效果 */
+    .selectable-card:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2), 0 4px 6px -2px rgba(99, 102, 241, 0.1);
+    }
+
+    .selectable-card:active {
+      transform: scale(0.96);
+    }
+
+    /* 選取狀態樣式 */
+    .card-selected {
+      background-color: #eef2ff !important; /* indigo-50 */
+      border-color: #4f46e5 !important; /* indigo-600 */
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25), 0 10px 15px -3px rgba(79, 70, 229, 0.2) !important;
+      transform: translateY(-2px);
+    }
+
+    /* 進場彈出動畫 */
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.7) translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .animate-pop-in {
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* 倒數計時緊急閃爍效果 */
+    @keyframes pulseUrgent {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); color: #ef4444; }
+    }
+
+    .urgent-timer {
+      animation: pulseUrgent 0.6s infinite;
+    }
+
+    /* 結算徽章光澤動畫 */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="text-slate-800 flex flex-col items-center justify-center p-4 md:p-8">
+
+  <!-- 主遊戲容器 -->
+  <main class="w-full max-w-5xl bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-white p-6 md:p-10 transition-all duration-300">
+    
+    <!-- 頂部標題列 -->
+    <header class="text-center mb-6">
+      <div class="inline-flex items-center justify-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full text-sm font-bold mb-3">
+        <span>🧠 瞬時記憶力大考驗</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+        表情符號記憶挑戰
+      </h1>
+    </header>
+
+    <!-- ==================== 畫面 1：難度選擇 ==================== -->
+    <section id="screen-menu" class="animate-pop-in">
+      <p class="text-center text-slate-600 text-base md:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+        在限定時間內記住畫面上出現的所有表情符號！<br class="hidden sm:inline">
+        時間結束後，請從混入干擾項的卡牌中，精準找出剛剛出現過的符號。
+      </p>
+
+      <!-- 四個難度卡片網格 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <!-- 新手 -->
+        <button onclick="startGame('novice')" class="group relative bg-gradient-to-b from-emerald-50 to-white hover:from-emerald-100 border-2 border-emerald-200 hover:border-emerald-500 rounded-2xl p-6 text-left transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl">🌱</span>
+              <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">Lv.1</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 group-hover:text-emerald-700 mb-2">新手</h2>
+            <p class="text-sm text-slate-500 mb-4">輕鬆熱身，適合初次體驗的玩家。</p>
+          </div>
+          <div class="space-y-1.5 pt-3 border-t border-emerald-100 text-sm font-medium text-slate-700">
+            <div class="flex justify-between">
+              <span>記憶數量：</span>
+              <span class="font-bold text-emerald-700">10 個符號</span>
+            </div>
+            <div class="flex justify-between">
+              <span>記憶時間：</span>
+              <span class="font-bold text-emerald-700">5 秒</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>作答卡牌總數：</span>
+              <span>20 張</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- 簡單 -->
+        <button onclick="startGame('easy')" class="group relative bg-gradient-to-b from-sky-50 to-white hover:from-sky-100 border-2 border-sky-200 hover:border-sky-500 rounded-2xl p-6 text-left transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl">🍀</span>
+              <span class="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-full">Lv.2</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 group-hover:text-sky-700 mb-2">簡單</h2>
+            <p class="text-sm text-slate-500 mb-4">數量增加，需要一點專注力與分組記憶。</p>
+          </div>
+          <div class="space-y-1.5 pt-3 border-t border-sky-100 text-sm font-medium text-slate-700">
+            <div class="flex justify-between">
+              <span>記憶數量：</span>
+              <span class="font-bold text-sky-700">15 個符號</span>
+            </div>
+            <div class="flex justify-between">
+              <span>記憶時間：</span>
+              <span class="font-bold text-sky-700">10 秒</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>作答卡牌總數：</span>
+              <span>30 張</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- 困難 -->
+        <button onclick="startGame('hard')" class="group relative bg-gradient-to-b from-amber-50 to-white hover:from-amber-100 border-2 border-amber-200 hover:border-amber-500 rounded-2xl p-6 text-left transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl">🔥</span>
+              <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">Lv.3</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 group-hover:text-amber-700 mb-2">困難</h2>
+            <p class="text-sm text-slate-500 mb-4">考驗短期記憶容量，干擾項大幅增加！</p>
+          </div>
+          <div class="space-y-1.5 pt-3 border-t border-amber-100 text-sm font-medium text-slate-700">
+            <div class="flex justify-between">
+              <span>記憶數量：</span>
+              <span class="font-bold text-amber-700">20 個符號</span>
+            </div>
+            <div class="flex justify-between">
+              <span>記憶時間：</span>
+              <span class="font-bold text-amber-700">15 秒</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>作答卡牌總數：</span>
+              <span>40 張</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- 惡夢 -->
+        <button onclick="startGame('nightmare')" class="group relative bg-gradient-to-b from-rose-50 to-white hover:from-rose-100 border-2 border-rose-200 hover:border-rose-500 rounded-2xl p-6 text-left transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl">💀</span>
+              <span class="bg-rose-100 text-rose-800 text-xs font-bold px-2.5 py-1 rounded-full">Lv.4</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 group-hover:text-rose-700 mb-2">惡夢</h2>
+            <p class="text-sm text-slate-500 mb-4">極限腦力挑戰，唯有記憶天才才能制霸！</p>
+          </div>
+          <div class="space-y-1.5 pt-3 border-t border-rose-100 text-sm font-medium text-slate-700">
+            <div class="flex justify-between">
+              <span>記憶數量：</span>
+              <span class="font-bold text-rose-700">30 個符號</span>
+            </div>
+            <div class="flex justify-between">
+              <span>記憶時間：</span>
+              <span class="font-bold text-rose-700">20 秒</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>作答卡牌總數：</span>
+              <span>60 張</span>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 評級標準說明條 -->
+      <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-center">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🏆 稱號評級標準（漏選與誤選皆計入錯誤題數）</p>
+        <div class="flex flex-wrap justify-center gap-2 md:gap-4 text-xs md:text-sm font-medium">
+          <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-800 font-bold">0 錯：天才</span>
+          <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 font-bold">1~2 錯：高手</span>
+          <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">3~4 錯：好棒!</span>
+          <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold">5~8 錯：可以再努力!</span>
+          <span class="px-3 py-1 rounded-full bg-slate-200 text-slate-700 font-bold">9+ 錯：再接再勵!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 畫面 2：記憶階段 ==================== -->
+    <section id="screen-memorize" class="hidden">
+      <!-- 狀態資訊列 -->
+      <div class="bg-indigo-50/80 border border-indigo-100 rounded-2xl p-4 mb-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2">
+            <span id="mem-difficulty-badge" class="px-3 py-1 rounded-full text-sm font-bold bg-indigo-600 text-white">難度</span>
+            <span class="text-slate-700 font-bold text-base md:text-lg">請記住這 <span id="mem-target-count" class="text-indigo-600 text-xl font-black">10</span> 個表情符號！</span>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <span class="text-xs text-slate-500 block">剩餘記憶時間</span>
+              <span id="mem-timer-text" class="text-2xl font-black text-indigo-600 tabular-nums">5.0 秒</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 倒數進度條 -->
+        <div class="w-full h-3 bg-indigo-200/70 rounded-full overflow-hidden">
+          <div id="mem-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-100 ease-linear" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- 展示要記憶的 Emoji 網格 -->
+      <div id="mem-grid" class="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-6 gap-3 md:gap-4 mb-8">
+        <!-- 由 JS 動態生成卡片 -->
+      </div>
+
+      <!-- 底部操作按鈕 -->
+      <div class="flex justify-center gap-4">
+        <button onclick="abortToMenu()" class="px-5 py-3 rounded-xl font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition">
+          放棄返回
+        </button>
+        <button onclick="finishMemorizingEarly()" class="px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition transform active:scale-95 flex items-center gap-2">
+          <span>⚡ 我記好了，直接開始作答</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== 畫面 3：作答階段 ==================== -->
+    <section id="screen-recall" class="hidden">
+      <!-- 頂部作答提示與計數器 -->
+      <div class="sticky top-2 z-20 bg-white/95 backdrop-blur-md border-2 border-indigo-100 shadow-md rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
+            <span>🔍 找出剛剛出現過的符號</span>
+          </h2>
+          <p class="text-xs md:text-sm text-slate-500">點擊卡牌進行選取或取消，共有 <span id="recall-total-cards" class="font-bold text-slate-700">20</span> 張卡牌（含干擾項）</p>
+        </div>
+
+        <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+          <!-- 已選取數量指示器 -->
+          <div id="selection-counter-box" class="bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 text-center">
+            <span class="text-xs text-slate-500 block">已選取 / 應選數量</span>
+            <span class="text-xl font-black text-indigo-600 tabular-nums">
+              <span id="selected-count">0</span> / <span id="target-select-count">10</span>
+            </span>
+          </div>
+
+          <!-- 送出答案按鈕 -->
+          <button id="btn-submit" onclick="submitAnswers()" class="px-6 py-3 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg transition transform active:scale-95 whitespace-nowrap">
+            ✅ 送出答案
+          </button>
+        </div>
+      </div>
+
+      <!-- 提示訊息條（當選取數量與目標不符時的溫馨提示） -->
+      <div id="recall-hint-banner" class="hidden mb-4 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium flex items-center justify-between">
+        <span id="recall-hint-text">提示訊息</span>
+        <button onclick="hideHint()" class="text-amber-600 hover:text-amber-900 font-bold ml-2">✕</button>
+      </div>
+
+      <!-- 作答卡牌網格 -->
+      <div id="recall-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2.5 md:gap-3.5 mb-6">
+        <!-- 由 JS 動態生成卡牌 -->
+      </div>
+    </section>
+
+    <!-- ==================== 畫面 4：結算與評語階段 ==================== -->
+    <section id="screen-result" class="hidden animate-pop-in">
+      <!-- 稱號與總結卡片 -->
+      <div id="result-banner" class="rounded-3xl p-6 md:p-8 text-center mb-8 border-2 relative overflow-hidden">
+        <div id="result-icon" class="text-6xl md:text-7xl mb-3 animate-float inline-block">🏆</div>
+        <p class="text-sm font-bold uppercase tracking-widest opacity-75 mb-1">挑戰結果評級</p>
+        <h2 id="result-title" class="text-4xl md:text-5xl font-black mb-3 tracking-tight">天才</h2>
+        <p id="result-subtitle" class="text-base md:text-lg font-medium max-w-xl mx-auto mb-6">
+          太神啦！過目不忘的頂級大腦，一個都沒錯！
+        </p>
+
+        <!-- 數據統計儀表板 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-white">
+          <div class="p-2">
+            <span class="text-xs text-slate-500 block font-medium">總錯誤題數</span>
+            <span id="stat-total-errors" class="text-2xl md:text-3xl font-black text-rose-600">0</span>
+            <span class="text-xs text-slate-400">題</span>
+          </div>
+          <div class="p-2 border-l border-slate-200/70">
+            <span class="text-xs text-slate-500 block font-medium">✅ 成功找對</span>
+            <span id="stat-correct" class="text-2xl md:text-3xl font-black text-emerald-600">10</span>
+            <span class="text-xs text-slate-400">個</span>
+          </div>
+          <div class="p-2 sm:border-l border-slate-200/70">
+            <span class="text-xs text-slate-500 block font-medium">⚠️ 漏選符號</span>
+            <span id="stat-missed" class="text-2xl md:text-3xl font-black text-amber-600">0</span>
+            <span class="text-xs text-slate-400">個</span>
+          </div>
+          <div class="p-2 border-l border-slate-200/70">
+            <span class="text-xs text-slate-500 block font-medium">❌ 誤選干擾</span>
+            <span id="stat-wrong" class="text-2xl md:text-3xl font-black text-rose-500">0</span>
+            <span class="text-xs text-slate-400">個</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 圖例說明 -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 px-1">
+        <h3 class="text-lg font-black text-slate-800">📋 卡牌作答明細檢視</h3>
+        <div class="flex flex-wrap gap-3 text-xs font-bold">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 答對（有出現且有選）
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 border border-amber-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 漏選（有出現但沒選）
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 border border-rose-300">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 誤選（沒出現卻選了）
+          </span>
+        </div>
+      </div>
+
+      <!-- 結算卡牌對照網格 -->
+      <div id="result-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2.5 md:gap-3.5 mb-8">
+        <!-- 由 JS 動態生成 -->
+      </div>
+
+      <!-- 再玩一次按鈕 -->
+      <div class="flex flex-wrap justify-center gap-4">
+        <button onclick="retrySameDifficulty()" class="px-6 py-3.5 rounded-2xl font-bold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition transform active:scale-95">
+          🔄 再挑戰一次同難度
+        </button>
+        <button onclick="resetToMenu()" class="px-8 py-3.5 rounded-2xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl transition transform active:scale-95">
+          🏠 返回選擇難度
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 頁尾版權與提示 -->
+  <footer class="mt-6 text-center text-xs text-slate-400">
+    表情符號記憶挑戰 • 支援鍵盤與滑鼠點擊操作
+  </footer>
+
+  <!-- ==================== 遊戲核心邏輯 JavaScript ==================== -->
+  <script>
+    /**
+     * 精選 100 個外觀差異明顯、清晰易辨識的表情符號題庫
+     * 涵蓋動物、食物、交通工具、日常物品、自然與表情，避免過於相似造成視覺混淆
+     */
+    const EMOJI_POOL = [
+      // 表情與人物
+      '😀', '😂', '🥰', '😎', '🤩', '🥳', '😭', '😡', '😱', '🥶',
+      '🤠', '🤡', '👻', '👽', '🤖', '💩', '🙈', '🐶', '🐱', '🐭',
+      // 動物與自然
+      '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵',
+      '🐔', '🐧', '🦆', '🦉', '🦄', '🐝', '🦋', '🐌', '🐙', '🦀',
+      '🐬', '🐳', '🦈', '🐊', '🐢', '🦖', '🐉', '🌵', '🌻', '🍄',
+      // 食物與飲料
+      '🍎', '🍌', '🍉', '🍇', '🍓', '🍒', '🍍', '🥝', '🥑', '🌽',
+      '🥕', '🍔', '🍟', '🍕', '🌭', '🌮', '🍣', '🍩', '🍪', '🎂',
+      '🍦', '🍫', '🍿', '☕', '🍺', '🥤',
+      // 運動、交通與物品
+      '⚽', '🏀', '🏈', '⚾', '🎾', '🎱', '🎮', '🎲', '🎸', '🎺',
+      '🎨', '🚗', '🚕', '🚒', '🚀', '🛸', '🚁', '⛵', '⏰', '💡',
+      '💎', '🔑', '🎁', '🎈', '👑', '🧲', '📚', '✂️', '☂️', '🔥'
+    ];
+
+    /**
+     * 難度設定參數
+     * count: 要記憶的表情符號數量
+     * time: 記憶時間（秒）
+     * distractorRatio: 干擾項倍數（1.0 代表加入等量的干擾符號，總卡牌數為 2 倍）
+     */
+    const DIFFICULTIES = {
+      novice:    { name: '新手 🌱', count: 10, time: 5,  badgeColor: 'bg-emerald-600' },
+      easy:      { name: '簡單 🍀', count: 15, time: 10, badgeColor: 'bg-sky-600' },
+      hard:      { name: '困難 🔥', count: 20, time: 15, badgeColor: 'bg-amber-600' },
+      nightmare: { name: '惡夢 💀', count: 30, time: 20, badgeColor: 'bg-rose-600' }
+    };
+
+    // 遊戲狀態變數
+    let currentDifficultyKey = 'novice';
+    let targetEmojis = [];      // 本局出現的正確 Emoji 陣列
+    let allRecallCards = [];    // 作答階段顯示的所有卡牌（正確 + 干擾，已洗牌）
+    let selectedSet = new Set();// 玩家目前選取的 Emoji 集合
+    let timerInterval = null;   // 倒數計時器參照
+    let remainingTime = 0;      // 剩餘秒數
+
+    // Web Audio API 簡易音效生成器（無需外部音檔）
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type = 'sine', duration = 0.08, volume = 0.08) {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        // 忽略部分瀏覽器自動播放限制錯誤
+      }
+    }
+
+    /**
+     * Fisher-Yates 洗牌演算法
+     */
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    /**
+     * 切換顯示畫面
+     */
+    function switchScreen(screenId) {
+      const screens = ['screen-menu', 'screen-memorize', 'screen-recall', 'screen-result'];
+      screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (id === screenId) {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /**
+     * 1. 開始遊戲：根據難度初始化並進入記憶階段
+     */
+    function startGame(diffKey) {
+      currentDifficultyKey = diffKey;
+      const config = DIFFICULTIES[diffKey];
+      
+      // 播放開始音效
+      playTone(523.25, 'sine', 0.12); // C5
+
+      // 洗牌題庫，取出前 N 個作為本局題目，再取出接下來的 N 個作為干擾項
+      const shuffledPool = shuffleArray(EMOJI_POOL);
+      targetEmojis = shuffledPool.slice(0, config.count);
+      const distractors = shuffledPool.slice(config.count, config.count * 2);
+      
+      // 合併並打亂作為作答階段卡牌
+      allRecallCards = shuffleArray([...targetEmojis, ...distractors]);
+      selectedSet.clear();
+
+      // 更新記憶階段 UI
+      const badgeEl = document.getElementById('mem-difficulty-badge');
+      badgeEl.textContent = config.name;
+      badgeEl.className = `px-3 py-1 rounded-full text-sm font-bold text-white ${config.badgeColor}`;
+      
+      document.getElementById('mem-target-count').textContent = config.count;
+
+      // 渲染記憶階段卡片網格
+      const memGrid = document.getElementById('mem-grid');
+      memGrid.innerHTML = '';
+      
+      // 根據數量調整網格欄數，讓排版在電腦螢幕上最美觀
+      if (config.count === 10) {
+        memGrid.className = 'grid grid-cols-2 sm:grid-cols-5 gap-3.5 md:gap-5 mb-8';
+      } else if (config.count === 15) {
+        memGrid.className = 'grid grid-cols-3 sm:grid-cols-5 gap-3.5 md:gap-4 mb-8';
+      } else if (config.count === 20) {
+        memGrid.className = 'grid grid-cols-4 sm:grid-cols-5 gap-3 md:gap-4 mb-8';
+      } else {
+        memGrid.className = 'grid grid-cols-5 sm:grid-cols-6 gap-2.5 md:gap-3.5 mb-8';
+      }
+
+      targetEmojis.forEach((emoji, index) => {
+        const card = document.createElement('div');
+        card.className = 'emoji-card bg-white border-2 border-slate-100 rounded-2xl py-4 md:py-6 flex items-center justify-center text-4xl md:text-5xl animate-pop-in';
+        card.style.animationDelay = `${index * 20}ms`;
+        card.textContent = emoji;
+        memGrid.appendChild(card);
+      });
+
+      switchScreen('screen-memorize');
+      startMemorizeTimer(config.time);
+    }
+
+    /**
+     * 啟動記憶倒數計時器
+     */
+    function startMemorizeTimer(totalSeconds) {
+      clearInterval(timerInterval);
+      remainingTime = totalSeconds;
+      const timerText = document.getElementById('mem-timer-text');
+      const progressBar = document.getElementById('mem-progress-bar');
+
+      timerText.classList.remove('urgent-timer');
+      progressBar.style.width = '100%';
+      timerText.textContent = `${remainingTime.toFixed(1)} 秒`;
+
+      const startTime = Date.now();
+      const endTime = startTime + totalSeconds * 1000;
+
+      timerInterval = setInterval(() => {
+        const now = Date.now();
+        const leftMs = Math.max(0, endTime - now);
+        remainingTime = leftMs / 1000;
+
+        // 更新文字與進度條
+        timerText.textContent = `${remainingTime.toFixed(1)} 秒`;
+        const percentage = (leftMs / (totalSeconds * 1000)) * 100;
+        progressBar.style.width = `${percentage}%`;
+
+        // 最後 3 秒加入視覺警示
+        if (remainingTime <= 3 && remainingTime > 0) {
+          timerText.classList.add('urgent-timer');
+        }
+
+        // 時間到，進入作答階段
+        if (leftMs <= 0) {
+          clearInterval(timerInterval);
+          enterRecallPhase();
+        }
+      }, 50);
+    }
+
+    /**
+     * 玩家提前完成記憶
+     */
+    function finishMemorizingEarly() {
+      clearInterval(timerInterval);
+      enterRecallPhase();
+    }
+
+    /**
+     * 放棄返回主選單
+     */
+    function abortToMenu() {
+      clearInterval(timerInterval);
+      switchScreen('screen-menu');
+    }
+
+    /**
+     * 2. 進入作答階段（翻轉為卡牌選擇介面）
+     */
+    function enterRecallPhase() {
+      playTone(659.25, 'sine', 0.15); // E5 提示音
+      const config = DIFFICULTIES[currentDifficultyKey];
+
+      document.getElementById('recall-total-cards').textContent = allRecallCards.length;
+      document.getElementById('target-select-count').textContent = config.count;
+      updateSelectionCounterUI();
+      hideHint();
+
+      const recallGrid = document.getElementById('recall-grid');
+      recallGrid.innerHTML = '';
+
+      allRecallCards.forEach((emoji, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.emoji = emoji;
+        btn.className = 'emoji-card selectable-card relative bg-white border-2 border-slate-200 rounded-2xl py-4 md:py-5 flex items-center justify-center text-3xl md:text-4xl cursor-pointer focus:outline-none';
+        btn.innerHTML = `
+          <span>${emoji}</span>
+          <span class="check-badge hidden absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">✓</span>
+        `;
+
+        btn.addEventListener('click', () => toggleCardSelection(btn, emoji));
+        recallGrid.appendChild(btn);
+      });
+
+      switchScreen('screen-recall');
+    }
+
+    /**
+     * 切換單張卡牌的選取狀態
+     */
+    function toggleCardSelection(cardEl, emoji) {
+      const badge = cardEl.querySelector('.check-badge');
+
+      if (selectedSet.has(emoji)) {
+        selectedSet.delete(emoji);
+        cardEl.classList.remove('card-selected');
+        badge.classList.add('hidden');
+        playTone(392.00, 'sine', 0.06, 0.05); // 取消選取低音
+      } else {
+        selectedSet.add(emoji);
+        cardEl.classList.add('card-selected');
+        badge.classList.remove('hidden');
+        playTone(587.33, 'sine', 0.06, 0.06); // 選取高音
+      }
+
+      updateSelectionCounterUI();
+    }
+
+    /**
+     * 更新右上角「已選取 / 應選數量」提示
+     */
+    function updateSelectionCounterUI() {
+      const config = DIFFICULTIES[currentDifficultyKey];
+      const currentCount = selectedSet.size;
+      const countEl = document.getElementById('selected-count');
+      const boxEl = document.getElementById('selection-counter-box');
+
+      countEl.textContent = currentCount;
+
+      if (currentCount === config.count) {
+        boxEl.className = 'bg-emerald-50 px-4 py-2 rounded-xl border-2 border-emerald-400 text-center transition-colors';
+        countEl.className = 'text-xl font-black text-emerald-600 tabular-nums';
+      } else if (currentCount > config.count) {
+        boxEl.className = 'bg-rose-50 px-4 py-2 rounded-xl border-2 border-rose-400 text-center transition-colors';
+        countEl.className = 'text-xl font-black text-rose-600 tabular-nums';
+      } else {
+        boxEl.className = 'bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 text-center transition-colors';
+        countEl.className = 'text-xl font-black text-indigo-600 tabular-nums';
+      }
+    }
+
+    function showHint(msg) {
+      const banner = document.getElementById('recall-hint-banner');
+      document.getElementById('recall-hint-text').textContent = msg;
+      banner.classList.remove('hidden');
+    }
+
+    function hideHint() {
+      document.getElementById('recall-hint-banner').classList.add('hidden');
+    }
+
+    /**
+     * 3. 送出答案並計算成績
+     */
+    function submitAnswers() {
+      const config = DIFFICULTIES[currentDifficultyKey];
+
+      // 若玩家一張都沒選，給予提醒避免誤觸
+      if (selectedSet.size === 0) {
+        showHint(`⚠️ 你還沒有選擇任何卡牌喔！剛剛總共出現了 ${config.count} 個表情符號。`);
+        playTone(220, 'sawtooth', 0.15, 0.08);
+        return;
+      }
+
+      const targetSet = new Set(targetEmojis);
+
+      let correctCount = 0; // 有出現且有選
+      let missedCount = 0;  // 有出現但沒選（漏選）
+      let wrongCount = 0;   // 沒出現卻選了（誤選）
+
+      // 統計正確與漏選
+      targetSet.forEach(emoji => {
+        if (selectedSet.has(emoji)) {
+          correctCount++;
+        } else {
+          missedCount++;
+        }
+      });
+
+      // 統計誤選
+      selectedSet.forEach(emoji => {
+        if (!targetSet.has(emoji)) {
+          wrongCount++;
+        }
+      });
+
+      // 總錯誤題數 = 漏選題數 + 誤選題數
+      const totalErrors = missedCount + wrongCount;
+
+      renderResultScreen(totalErrors, correctCount, missedCount, wrongCount, targetSet);
+    }
+
+    /**
+     * 4. 渲染結算畫面與稱號評語
+     */
+    function renderResultScreen(totalErrors, correctCount, missedCount, wrongCount, targetSet) {
+      // 根據題目規定的錯誤題數區間判定稱號
+      let title = '';
+      let subtitle = '';
+      let icon = '';
+      let bannerStyle = '';
+      let titleColor = '';
+
+      if (totalErrors === 0) {
+        title = '天才';
+        subtitle = '太神啦！過目不忘的頂級大腦，所有符號分毫不差！';
+        icon = '👑';
+        bannerStyle = 'bg-gradient-to-br from-purple-100 via-indigo-50 to-amber-50 border-purple-300';
+        titleColor = 'text-purple-700';
+        playVictoryFanfare();
+      } else if (totalErrors >= 1 && totalErrors <= 2) {
+        title = '高手';
+        subtitle = '非常厲害！只差一點點就完美通關了，觀察力與記憶力超群！';
+        icon = '🥇';
+        bannerStyle = 'bg-gradient-to-br from-indigo-100 via-sky-50 to-white border-indigo-300';
+        titleColor = 'text-indigo-700';
+        playTone(659.25, 'sine', 0.2);
+      } else if (totalErrors >= 3 && totalErrors <= 4) {
+        title = '好棒!';
+        subtitle = '表現得很不錯喔！大部分的表情符號都成功記住了！';
+        icon = '🌟';
+        bannerStyle = 'bg-gradient-to-br from-emerald-100 via-teal-50 to-white border-emerald-300';
+        titleColor = 'text-emerald-700';
+        playTone(523.25, 'sine', 0.2);
+      } else if (totalErrors >= 5 && totalErrors <= 8) {
+        title = '可以再努力!';
+        subtitle = '差一點點就能拿到更高評價了，試著把符號編成故事來記憶吧！';
+        icon = '💪';
+        bannerStyle = 'bg-gradient-to-br from-amber-100 via-orange-50 to-white border-amber-300';
+        titleColor = 'text-amber-700';
+        playTone(392.00, 'sine', 0.2);
+      } else {
+        // 錯誤 9 題及以上
+        title = '再接再勵!';
+        subtitle = '這次符號太多眼花撩亂了嗎？深呼吸調整節奏，再挑戰一次吧！';
+        icon = '🌱';
+        bannerStyle = 'bg-gradient-to-br from-slate-200 via-slate-100 to-white border-slate-300';
+        titleColor = 'text-slate-700';
+        playTone(329.63, 'sine', 0.25);
+      }
+
+      // 更新結算橫幅
+      const banner = document.getElementById('result-banner');
+      banner.className = `rounded-3xl p-6 md:p-8 text-center mb-8 border-2 relative overflow-hidden ${bannerStyle}`;
+      
+      document.getElementById('result-icon').textContent = icon;
+      const titleEl = document.getElementById('result-title');
+      titleEl.textContent = title;
+      titleEl.className = `text-4xl md:text-5xl font-black mb-3 tracking-tight ${titleColor}`;
+      document.getElementById('result-subtitle').textContent = subtitle;
+
+      // 更新統計數據
+      document.getElementById('stat-total-errors').textContent = totalErrors;
+      document.getElementById('stat-correct').textContent = correctCount;
+      document.getElementById('stat-missed').textContent = missedCount;
+      document.getElementById('stat-wrong').textContent = wrongCount;
+
+      // 渲染結算卡牌明細（讓玩家清楚看到對錯）
+      const resultGrid = document.getElementById('result-grid');
+      resultGrid.innerHTML = '';
+
+      allRecallCards.forEach(emoji => {
+        const isTarget = targetSet.has(emoji);
+        const isSelected = selectedSet.has(emoji);
+
+        const card = document.createElement('div');
+        let cardClass = 'relative rounded-2xl py-4 flex flex-col items-center justify-center text-3xl md:text-4xl border-2 ';
+        let statusTag = '';
+
+        if (isTarget && isSelected) {
+          // 答對
+          cardClass += 'bg-emerald-50 border-emerald-400 shadow-sm';
+          statusTag = '<span class="mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">答對</span>';
+        } else if (isTarget && !isSelected) {
+          // 漏選
+          cardClass += 'bg-amber-50 border-amber-400 shadow-sm';
+          statusTag = '<span class="mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">漏選</span>';
+        } else if (!isTarget && isSelected) {
+          // 誤選
+          cardClass += 'bg-rose-50 border-rose-400 shadow-sm';
+          statusTag = '<span class="mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white">誤選</span>';
+        } else {
+          // 正確忽略的干擾項
+          cardClass += 'bg-slate-50/60 border-slate-200/60 opacity-45';
+          statusTag = '<span class="mt-1 text-[11px] font-medium text-slate-400">干擾</span>';
+        }
+
+        card.className = cardClass;
+        card.innerHTML = `<span>${emoji}</span>${statusTag}`;
+        resultGrid.appendChild(card);
+      });
+
+      switchScreen('screen-result');
+    }
+
+    /**
+     * 天才通關小音效
+     */
+    function playVictoryFanfare() {
+      setTimeout(() => playTone(523.25, 'triangle', 0.12, 0.1), 0);
+      setTimeout(() => playTone(659.25, 'triangle', 0.12, 0.1), 110);
+      setTimeout(() => playTone(783.99, 'triangle', 0.12, 0.1), 220);
+      setTimeout(() => playTone(1046.50, 'triangle', 0.3, 0.12), 330);
+    }
+
+    /**
+     * 再挑戰一次相同難度
+     */
+    function retrySameDifficulty() {
+      startGame(currentDifficultyKey);
+    }
+
+    /**
+     * 回到難度選擇畫面
+     */
+    function resetToMenu() {
+      clearInterval(timerInterval);
+      switchScreen('screen-menu');
+    }
+  </script>
+</body>
+</html>
